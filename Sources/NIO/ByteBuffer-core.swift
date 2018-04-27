@@ -280,7 +280,7 @@ public struct ByteBuffer {
             for i in Int(slice.lowerBound) + offset ..< Int(slice.lowerBound) + offset + length {
                 let byte = self.bytes.advanced(by: i).assumingMemoryBound(to: UInt8.self).pointee
                 let hexByte = String(byte, radix: 16)
-                desc += " \(hexByte.count == 1 ? " " : "")\(hexByte)"
+                desc += " \(hexByte.count == 1 ? "0" : "")\(hexByte)"
             }
             desc += " ]"
             return desc
@@ -325,15 +325,28 @@ public struct ByteBuffer {
 
     // MARK: Internal API
 
-    private mutating func _moveReaderIndex(to newIndex: Index) {
+    @_inlineable @_versioned
+    mutating func _moveReaderIndex(to newIndex: Index) {
         assert(newIndex >= 0 && newIndex <= writerIndex)
         self._readerIndex = newIndex
+    }
+
+    @_inlineable @_versioned
+    mutating func _moveReaderIndex(forwardBy offset: Int) {
+        let newIndex = self._readerIndex + _toIndex(offset)
+        self._moveReaderIndex(to: newIndex)
     }
 
     @_inlineable @_versioned
     mutating func _moveWriterIndex(to newIndex: Index) {
         assert(newIndex >= 0 && newIndex <= _toCapacity(self._slice.count))
         self._writerIndex = newIndex
+    }
+
+    @_inlineable @_versioned
+    mutating func _moveWriterIndex(forwardBy offset: Int) {
+        let newIndex = self._writerIndex + _toIndex(offset)
+        self._moveWriterIndex(to: newIndex)
     }
 
     @_inlineable @_versioned
@@ -536,7 +549,7 @@ public struct ByteBuffer {
         }
         var new = self
         new._slice = _ByteBufferSlice(sliceStartIndex ..< self._slice.lowerBound + index+length)
-        new.moveReaderIndex(to: 0)
+        new._moveReaderIndex(to: 0)
         new._moveWriterIndex(to: length)
         return new
     }
@@ -550,12 +563,19 @@ public struct ByteBuffer {
             return false
         }
 
+        if self._readerIndex == self._writerIndex {
+            // If the whole buffer was consumed we can just reset the readerIndex and writerIndex to 0 and move on.
+            self._moveWriterIndex(to: 0)
+            self._moveReaderIndex(to: 0)
+            return true
+        }
+
         if isKnownUniquelyReferenced(&self._storage) {
             self._storage.bytes.advanced(by: Int(self._slice.lowerBound))
                 .copyMemory(from: self._storage.bytes.advanced(by: Int(self._slice.lowerBound + self._readerIndex)),
                             byteCount: self.readableBytes)
             let indexShift = self._readerIndex
-            self.moveReaderIndex(to: 0)
+            self._moveReaderIndex(to: 0)
             self._moveWriterIndex(to: self._writerIndex - indexShift)
         } else {
             self._copyStorageAndRebase(extraCapacity: 0, resetIndices: true)
@@ -585,8 +605,8 @@ public struct ByteBuffer {
         if !isKnownUniquelyReferenced(&self._storage) {
             self._storage = self._storage.allocateStorage()
         }
-        self.moveWriterIndex(to: 0)
-        self.moveReaderIndex(to: 0)
+        self._moveWriterIndex(to: 0)
+        self._moveReaderIndex(to: 0)
     }
 }
 
@@ -624,6 +644,7 @@ extension ByteBuffer: CustomStringConvertible {
 
 /// A `Collection` that is contiguously layed out in memory and can therefore be duplicated using `memcpy`.
 public protocol ContiguousCollection: Collection {
+    @_inlineable
     func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R
 }
 

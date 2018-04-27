@@ -113,6 +113,8 @@ extension ByteBufferTest {
                 ("testByteBufferFitsInACoupleOfEnums", testByteBufferFitsInACoupleOfEnums),
                 ("testLargeSliceBegin16MBIsOkayAndDoesNotCopy", testLargeSliceBegin16MBIsOkayAndDoesNotCopy),
                 ("testLargeSliceBeginMoreThan16MBIsOkay", testLargeSliceBeginMoreThan16MBIsOkay),
+                ("testDiscardReadBytesOnConsumedBuffer", testDiscardReadBytesOnConsumedBuffer),
+                ("testDumpBytesFormat", testDumpBytesFormat),
            ]
    }
 }
