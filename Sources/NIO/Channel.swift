@@ -327,27 +327,17 @@ public enum ChannelLifecycleError: Error {
 extension ChannelError: Equatable {
     public static func ==(lhs: ChannelError, rhs: ChannelError) -> Bool {
         switch (lhs, rhs) {
-        case (.connectPending, .connectPending):
-            return true
-        case (.connectTimeout, .connectTimeout):
-            return true
-        case (.operationUnsupported, .operationUnsupported):
-            return true
-        case (.ioOnClosedChannel, .ioOnClosedChannel):
-            return true
-        case (.alreadyClosed, .alreadyClosed):
-            return true
-        case (.outputClosed, .outputClosed):
-            return true
-        case (.inputClosed, .inputClosed):
-            return true
-        case (.eof, .eof):
-            return true
-        case (.writeDataUnsupported, .writeDataUnsupported):
-            return true
-        case (.writeMessageTooLarge, .writeMessageTooLarge):
-            return true
-        case (.writeHostUnreachable, .writeHostUnreachable):
+        case (.connectPending, .connectPending),
+             (.connectTimeout, .connectTimeout),
+             (.operationUnsupported, .operationUnsupported),
+             (.ioOnClosedChannel, .ioOnClosedChannel),
+             (.alreadyClosed, .alreadyClosed),
+             (.outputClosed, .outputClosed),
+             (.inputClosed, .inputClosed),
+             (.eof, .eof),
+             (.writeDataUnsupported, .writeDataUnsupported),
+             (.writeMessageTooLarge, .writeMessageTooLarge),
+             (.writeHostUnreachable, .writeHostUnreachable):
             return true
         default:
             return false
